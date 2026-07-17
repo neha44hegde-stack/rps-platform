@@ -1,7 +1,15 @@
 {% extends "base.html" %}
 {% block content %}
-<h2>Result: {{ result }}</h2>
-<p>You chose: {{ player_choice }}</p>
-<p>Computer chose: {{ computer_choice }}</p>
-<p><a href="{{ url_for('game.index') }}">Play Again</a></p>
+<div class="text-center">
+    {% if result == 'win' %}
+        <h2 class="text-success">You Win! ??</h2>
+    {% elif result == 'loss' %}
+        <h2 class="text-danger">You Lose ??</h2>
+    {% else %}
+        <h2 class="text-warning">Draw ??</h2>
+    {% endif %}
+    <p>You chose: <strong>{{ player_choice }}</strong></p>
+    <p>Computer chose: <strong>{{ computer_choice }}</strong></p>
+    <a href="{{ url_for('game.index') }}" class="btn btn-primary mt-3">Play Again</a>
+</div>
 {% endblock %}

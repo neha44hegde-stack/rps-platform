@@ -1,21 +1,28 @@
 {% extends "base.html" %}
 {% block content %}
 <h2>Game History</h2>
-<table border="1">
+<table class="table table-striped table-bordered bg-white">
+    <thead class="table-dark">
     <tr>
         <th>Date</th>
         <th>You</th>
         <th>Computer</th>
         <th>Result</th>
     </tr>
+    </thead>
+    <tbody>
     {% for game in games %}
     <tr>
-        <td>{{ game.played_at }}</td>
+        <td>{{ game.played_at.strftime('%Y-%m-%d %H:%M') }}</td>
         <td>{{ game.player_choice }}</td>
         <td>{{ game.computer_choice }}</td>
-        <td>{{ game.result }}</td>
+        <td>
+            {% if game.result == 'win' %}<span class="badge bg-success">Win</span>
+            {% elif game.result == 'loss' %}<span class="badge bg-danger">Loss</span>
+            {% else %}<span class="badge bg-warning text-dark">Draw</span>{% endif %}
+        </td>
     </tr>
     {% endfor %}
+    </tbody>
 </table>
-<p><a href="{{ url_for('game.index') }}">Back to Game</a></p>
 {% endblock %}

@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Game History</h2>
+<table border="1">
+    <tr>
+        <th>Date</th>
+        <th>You</th>
+        <th>Computer</th>
+        <th>Result</th>
+    </tr>
+    {% for game in games %}
+    <tr>
+        <td>{{ game.played_at }}</td>
+        <td>{{ game.player_choice }}</td>
+        <td>{{ game.computer_choice }}</td>
+        <td>{{ game.result }}</td>
+    </tr>
+    {% endfor %}
+</table>
+<p><a href="{{ url_for('game.index') }}">Back to Game</a></p>
+{% endblock %}

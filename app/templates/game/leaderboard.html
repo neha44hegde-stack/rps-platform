@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Leaderboard</h2>
+<table border="1">
+    <tr>
+        <th>Rank</th>
+        <th>Player</th>
+        <th>Total Games</th>
+        <th>Wins</th>
+        <th>Win %</th>
+        <th>Best Streak</th>
+    </tr>
+    {% for score in scores %}
+    <tr>
+        <td>{{ loop.index }}</td>
+        <td>{{ score.user.username }}</td>
+        <td>{{ score.total_games }}</td>
+        <td>{{ score.wins }}</td>
+        <td>{{ score.win_percentage }}%</td>
+        <td>{{ score.best_streak }}</td>
+    </tr>
+    {% endfor %}
+</table>
+<p><a href="{{ url_for('game.index') }}">Back to Game</a></p>
+{% endblock %}

@@ -3,7 +3,7 @@ from flask import render_template, request, redirect, url_for
 from flask_login import login_required, current_user
 from app import db
 from app.game import game_bp
-from app.models import Game, Score
+from app.models import Game, Score, User
 
 CHOICES = ['rock', 'paper', 'scissors']
 
@@ -75,3 +75,9 @@ def play():
 def history():
     games = Game.query.filter_by(user_id=current_user.id).order_by(Game.played_at.desc()).all()
     return render_template('game/history.html', games=games)
+
+@game_bp.route('/leaderboard')
+@login_required
+def leaderboard():
+    scores = Score.query.filter(Score.total_games > 0).order_by(Score.wins.desc()).all()
+    return render_template('game/leaderboard.html', scores=scores)

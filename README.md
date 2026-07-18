@@ -85,7 +85,7 @@ rps-platform/
    python run.py
    \`\`\`
 
-6. Open \`http://127.0.0.1:5000\` in your browser
+6. Open \`http://127.0.0.1:5000` in your browser
 
 ### Running with Docker
 

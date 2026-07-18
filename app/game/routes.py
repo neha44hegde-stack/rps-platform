@@ -1,8 +1,9 @@
-import random
+﻿import random
 from flask import render_template, request, redirect, url_for
 from flask_login import login_required, current_user
 from app import db
 from app.game import game_bp
+from app.game.ai import get_ai_choice
 from app.models import Game, Score, User
 
 CHOICES = ['rock', 'paper', 'scissors']
@@ -27,7 +28,7 @@ def play():
     if player_choice not in CHOICES:
         return redirect(url_for('game.index'))
 
-    computer_choice = random.choice(CHOICES)
+    computer_choice, predicted_move, method = get_ai_choice(current_user.id)
     result = determine_winner(player_choice, computer_choice)
 
     game = Game(
@@ -68,7 +69,9 @@ def play():
     return render_template('game/result.html',
                             player_choice=player_choice,
                             computer_choice=computer_choice,
-                            result=result)
+                            result=result,
+                            predicted_move=predicted_move,
+                            method=method)
 
 @game_bp.route('/history')
 @login_required

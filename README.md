@@ -1,4 +1,4 @@
-@"
+
 # RPS Platform — AI-Powered Multiplayer Rock Paper Scissors
 
 A full-stack Flask web application that goes far beyond a basic Rock Paper Scissors game. It features an AI opponent that learns and predicts your play patterns, real-time multiplayer via WebSockets, webcam-based hand gesture recognition, a documented REST API, and a full CI/CD pipeline.
@@ -85,7 +85,7 @@ rps-platform/
    python run.py
    \`\`\`
 
-6. Open \`http://127.0.0.1:5000\` in your browser
+6. Open \`http://127.0.0.1:5000` in your browser
 
 ### Running with Docker
 
@@ -139,4 +139,3 @@ Both must pass before a change is considered stable.
 ## License
 
 This project is for portfolio/educational purposes.
-"@ | Set-Content -Encoding utf8 README.md

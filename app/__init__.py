@@ -3,6 +3,8 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_login import LoginManager
 from flask_socketio import SocketIO
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 from config import config
 
 db = SQLAlchemy()
@@ -10,15 +12,27 @@ migrate = Migrate()
 login_manager = LoginManager()
 socketio = SocketIO()
 
+# Rate limiter extension
+limiter = Limiter(
+    key_func=get_remote_address
+)
+
+
 def create_app(config_name='default'):
     app = Flask(__name__)
+
     app.config.from_object(config[config_name])
 
     db.init_app(app)
     migrate.init_app(app, db)
+
     login_manager.init_app(app)
     login_manager.login_view = 'auth.login'
+
     socketio.init_app(app, cors_allowed_origins='*')
+
+    # Initialize rate limiter
+    limiter.init_app(app)
 
     from app import models
 

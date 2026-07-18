@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -13,6 +13,7 @@
             {% if current_user.is_authenticated %}
             <div class="d-flex gap-3">
                 <a class="nav-link text-white" href="{{ url_for('game.index') }}">Play</a>
+                <a class="nav-link text-white" href="{{ url_for('game.dashboard') }}">Dashboard</a>
                 <a class="nav-link text-white" href="{{ url_for('game.history') }}">History</a>
                 <a class="nav-link text-white" href="{{ url_for('game.leaderboard') }}">Leaderboard</a>
                 <a class="nav-link text-white" href="{{ url_for('auth.profile') }}">Profile</a>

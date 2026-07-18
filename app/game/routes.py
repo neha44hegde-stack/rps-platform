@@ -84,3 +84,26 @@ def history():
 def leaderboard():
     scores = Score.query.filter(Score.total_games > 0).order_by(Score.wins.desc()).all()
     return render_template('game/leaderboard.html', scores=scores)
+
+@game_bp.route('/dashboard')
+@login_required
+def dashboard():
+    score = Score.query.filter_by(user_id=current_user.id).first()
+    games = Game.query.filter_by(user_id=current_user.id).order_by(Game.played_at.asc()).all()
+
+    move_counts = {'rock': 0, 'paper': 0, 'scissors': 0}
+    for g in games:
+        move_counts[g.player_choice] += 1
+
+    running_win_rate = []
+    wins_so_far = 0
+    for i, g in enumerate(games, start=1):
+        if g.result == 'win':
+            wins_so_far += 1
+        running_win_rate.append(round((wins_so_far / i) * 100, 1))
+
+    return render_template('game/dashboard.html',
+                            score=score,
+                            move_counts=move_counts,
+                            running_win_rate=running_win_rate,
+                            game_numbers=list(range(1, len(games) + 1)))

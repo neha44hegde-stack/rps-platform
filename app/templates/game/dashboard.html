@@ -1,0 +1,77 @@
+﻿{% extends "base.html" %}
+{% block content %}
+<h2>Dashboard</h2>
+
+{% if not score or score.total_games == 0 %}
+<p class="text-muted">Play a few games to see your stats here.</p>
+{% else %}
+<div class="row g-4 mb-4">
+    <div class="col-md-3"><div class="card text-center p-3"><h6>Total Games</h6><h3>{{ score.total_games }}</h3></div></div>
+    <div class="col-md-3"><div class="card text-center p-3"><h6>Win Rate</h6><h3>{{ score.win_percentage }}%</h3></div></div>
+    <div class="col-md-3"><div class="card text-center p-3"><h6>Current Streak</h6><h3>{{ score.current_streak }}</h3></div></div>
+    <div class="col-md-3"><div class="card text-center p-3"><h6>Best Streak</h6><h3>{{ score.best_streak }}</h3></div></div>
+</div>
+
+<div class="row g-4">
+    <div class="col-md-4">
+        <div class="card p-3">
+            <h5>Win / Loss / Draw</h5>
+            <canvas id="resultChart"></canvas>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card p-3">
+            <h5>Your Move Choices</h5>
+            <canvas id="moveChart"></canvas>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card p-3">
+            <h5>Win Rate Over Time</h5>
+            <canvas id="trendChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script>
+new Chart(document.getElementById('resultChart'), {
+    type: 'pie',
+    data: {
+        labels: ['Wins', 'Losses', 'Draws'],
+        datasets: [{
+            data: [{{ score.wins }}, {{ score.losses }}, {{ score.draws }}],
+            backgroundColor: ['#198754', '#dc3545', '#ffc107']
+        }]
+    }
+});
+
+new Chart(document.getElementById('moveChart'), {
+    type: 'bar',
+    data: {
+        labels: ['Rock', 'Paper', 'Scissors'],
+        datasets: [{
+            label: 'Times Played',
+            data: [{{ move_counts['rock'] }}, {{ move_counts['paper'] }}, {{ move_counts['scissors'] }}],
+            backgroundColor: '#0d6efd'
+        }]
+    },
+    options: { plugins: { legend: { display: false } } }
+});
+
+new Chart(document.getElementById('trendChart'), {
+    type: 'line',
+    data: {
+        labels: {{ game_numbers }},
+        datasets: [{
+            label: 'Win Rate %',
+            data: {{ running_win_rate }},
+            borderColor: '#6610f2',
+            fill: false,
+            tension: 0.2
+        }]
+    }
+});
+</script>
+{% endif %}
+{% endblock %}

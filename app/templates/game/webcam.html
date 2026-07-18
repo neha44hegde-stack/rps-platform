@@ -1,0 +1,169 @@
+﻿{% extends "base.html" %}
+{% block content %}
+<div class="text-center">
+    <h2>Play with Webcam Gestures</h2>
+    <p class="text-muted">Show Rock, Paper, or Scissors to your camera. Hold steady for a moment to lock in your choice.</p>
+
+    <div style="position: relative; width: 640px; margin: 0 auto;">
+        <video id="webcam" width="640" height="480" autoplay muted playsinline style="transform: scaleX(-1); border-radius: 8px; background: #333;"></video>
+        <canvas id="overlay" width="640" height="480" style="position: absolute; top: 0; left: 0; transform: scaleX(-1);"></canvas>
+    </div>
+
+    <p id="status-text" class="mt-3">Loading hand tracking model...</p>
+    <h3 id="detected-gesture" class="text-primary"></h3>
+
+    <div id="game-result" class="mt-3"></div>
+</div>
+
+<script type="module">
+import { HandLandmarker, FilesetResolver } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14";
+
+const video = document.getElementById('webcam');
+const canvas = document.getElementById('overlay');
+const ctx = canvas.getContext('2d');
+const statusText = document.getElementById('status-text');
+const gestureText = document.getElementById('detected-gesture');
+const resultDiv = document.getElementById('game-result');
+
+let handLandmarker;
+let lastGesture = null;
+let gestureStableSince = null;
+let locked = false;
+const STABLE_MS = 1000;
+
+function distance(a, b) {
+    return Math.hypot(a.x - b.x, a.y - b.y);
+}
+
+function classifyGesture(landmarks) {
+    const wrist = landmarks[0];
+    const fingers = [
+        { tip: landmarks[8], pip: landmarks[6] },   // index
+        { tip: landmarks[12], pip: landmarks[10] }, // middle
+        { tip: landmarks[16], pip: landmarks[14] }, // ring
+        { tip: landmarks[20], pip: landmarks[18] }  // pinky
+    ];
+
+    let extendedCount = 0;
+    let extended = [];
+    for (const f of fingers) {
+        const tipDist = distance(f.tip, wrist);
+        const pipDist = distance(f.pip, wrist);
+        const isExtended = tipDist > pipDist * 1.15;
+        extended.push(isExtended);
+        if (isExtended) extendedCount++;
+    }
+
+    if (extendedCount <= 1) return 'rock';
+    if (extendedCount === 2 && extended[0] && extended[1]) return 'scissors';
+    if (extendedCount >= 3) return 'paper';
+    return null;
+}
+
+async function submitChoice(choice) {
+    resultDiv.innerHTML = '<p class="text-muted">Submitting...</p>';
+    const formData = new FormData();
+    formData.append('choice', choice);
+
+    const response = await fetch("{{ url_for('game.play') }}", {
+        method: 'POST',
+        body: formData
+    });
+    const html = await response.text();
+
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, 'text/html');
+    const heading = doc.querySelector('h2');
+    const choiceLines = doc.querySelectorAll('p');
+
+    let resultHtml = '<div class="card p-3 mt-3">';
+    if (heading) resultHtml += '<h3>' + heading.textContent + '</h3>';
+    choiceLines.forEach(p => {
+        if (p.textContent.includes('You chose') || p.textContent.includes('Computer chose')) {
+            resultHtml += '<p>' + p.textContent + '</p>';
+        }
+    });
+    resultHtml += '<button class="btn btn-primary mt-2" onclick="location.reload()">Play Again</button></div>';
+    resultDiv.innerHTML = resultHtml;
+}
+
+async function init() {
+    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+    video.srcObject = stream;
+    await video.play();
+
+    statusText.textContent = "Camera started. Loading hand tracking model...";
+
+    const vision = await FilesetResolver.forVisionTasks(
+        "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm"
+    );
+    handLandmarker = await HandLandmarker.createFromOptions(vision, {
+        baseOptions: {
+            modelAssetPath: "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task"
+        },
+        runningMode: "VIDEO",
+        numHands: 1
+    });
+
+    statusText.textContent = "Model loaded. Show your hand!";
+    requestAnimationFrame(detectLoop);
+}
+
+function detectLoop() {
+    if (locked) {
+        requestAnimationFrame(detectLoop);
+        return;
+    }
+
+    if (video.readyState >= 2) {
+        const results = handLandmarker.detectForVideo(video, performance.now());
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        if (results.landmarks && results.landmarks.length > 0) {
+            const landmarks = results.landmarks[0];
+            ctx.fillStyle = "red";
+            for (const point of landmarks) {
+                const x = point.x * canvas.width;
+                const y = point.y * canvas.height;
+                ctx.beginPath();
+                ctx.arc(x, y, 4, 0, 2 * Math.PI);
+                ctx.fill();
+            }
+
+            const gesture = classifyGesture(landmarks);
+            statusText.textContent = "Hand detected!";
+
+            if (gesture) {
+                gestureText.textContent = "Detected: " + gesture;
+
+                if (gesture === lastGesture) {
+                    if (gestureStableSince && (performance.now() - gestureStableSince > STABLE_MS)) {
+                        locked = true;
+                        gestureText.textContent = "Locked in: " + gesture;
+                        submitChoice(gesture);
+                    }
+                } else {
+                    lastGesture = gesture;
+                    gestureStableSince = performance.now();
+                }
+            } else {
+                gestureText.textContent = "";
+                lastGesture = null;
+                gestureStableSince = null;
+            }
+        } else {
+            statusText.textContent = "No hand detected. Show your hand to the camera.";
+            gestureText.textContent = "";
+            lastGesture = null;
+            gestureStableSince = null;
+        }
+    }
+    requestAnimationFrame(detectLoop);
+}
+
+init().catch(err => {
+    statusText.textContent = "Error: " + err.message;
+    console.error("INIT FAILED:", err);
+});
+</script>
+{% endblock %}

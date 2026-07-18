@@ -13,6 +13,8 @@
             {% if current_user.is_authenticated %}
             <div class="d-flex gap-3">
                 <a class="nav-link text-white" href="{{ url_for('game.index') }}">Play</a>
+                <a class="nav-link text-white" href="{{ url_for('game.webcam') }}">Webcam</a>
+                <a class="nav-link text-white" href="{{ url_for('multiplayer.lobby') }}">Multiplayer</a>
                 <a class="nav-link text-white" href="{{ url_for('game.dashboard') }}">Dashboard</a>
                 <a class="nav-link text-white" href="{{ url_for('game.history') }}">History</a>
                 <a class="nav-link text-white" href="{{ url_for('game.leaderboard') }}">Leaderboard</a>

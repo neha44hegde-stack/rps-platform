@@ -107,3 +107,8 @@ def dashboard():
                             move_counts=move_counts,
                             running_win_rate=running_win_rate,
                             game_numbers=list(range(1, len(games) + 1)))
+
+@game_bp.route('/webcam')
+@login_required
+def webcam():
+    return render_template('game/webcam.html')

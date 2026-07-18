@@ -1,4 +1,4 @@
-import os
+﻿import os
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 
@@ -17,6 +17,7 @@ class ProductionConfig(Config):
 class TestingConfig(Config):
     TESTING = True
     SQLALCHEMY_DATABASE_URI = 'sqlite:///:memory:'
+    WTF_CSRF_ENABLED = False
 
 config = {
     'development': DevelopmentConfig,

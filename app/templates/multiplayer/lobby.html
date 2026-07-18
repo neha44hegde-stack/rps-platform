@@ -1,5 +1,121 @@
 ﻿{% extends "base.html" %}
 {% block content %}
-<h2>Multiplayer Lobby</h2>
-<p>Coming soon.</p>
+<div class="text-center">
+    <h2>Multiplayer</h2>
+
+    <div id="idle-state">
+        <button id="find-match-btn" class="btn btn-primary btn-lg">Find Match</button>
+    </div>
+
+    <div id="waiting-state" class="d-none">
+        <p>Looking for an opponent...</p>
+        <button id="cancel-btn" class="btn btn-outline-secondary">Cancel</button>
+    </div>
+
+    <div id="match-state" class="d-none">
+        <p>Playing against: <strong id="opponent-name"></strong></p>
+        <div class="d-flex justify-content-center gap-3 my-3">
+            <button class="choice-btn btn btn-lg btn-outline-primary" data-choice="rock">Rock</button>
+            <button class="choice-btn btn btn-lg btn-outline-primary" data-choice="paper">Paper</button>
+            <button class="choice-btn btn btn-lg btn-outline-primary" data-choice="scissors">Scissors</button>
+        </div>
+        <p id="status-text" class="text-muted"></p>
+    </div>
+
+    <div id="result-state" class="d-none">
+        <h3 id="result-heading"></h3>
+        <p>You chose <strong id="your-choice-text"></strong>, <span id="opponent-name-2"></span> chose <strong id="opponent-choice-text"></strong></p>
+        <button id="play-again-btn" class="btn btn-primary">Play Again</button>
+        <button id="leave-btn" class="btn btn-outline-secondary">Back to Lobby</button>
+    </div>
+</div>
+
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+<script>
+const socket = io();
+
+let currentRoom = null;
+
+const idleState = document.getElementById('idle-state');
+const waitingState = document.getElementById('waiting-state');
+const matchState = document.getElementById('match-state');
+const resultState = document.getElementById('result-state');
+
+function showState(state) {
+    [idleState, waitingState, matchState, resultState].forEach(el => el.classList.add('d-none'));
+    state.classList.remove('d-none');
+}
+
+document.getElementById('find-match-btn').addEventListener('click', () => {
+    socket.emit('find_match');
+    showState(waitingState);
+});
+
+document.getElementById('cancel-btn').addEventListener('click', () => {
+    socket.emit('cancel_find');
+    showState(idleState);
+});
+
+socket.on('waiting_for_opponent', () => {
+    showState(waitingState);
+});
+
+socket.on('match_found', (data) => {
+    currentRoom = data.room;
+    document.getElementById('opponent-name').textContent = data.opponent;
+    document.getElementById('status-text').textContent = '';
+    showState(matchState);
+});
+
+document.querySelectorAll('.choice-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        const choice = btn.getAttribute('data-choice');
+        socket.emit('submit_choice', { room: currentRoom, choice: choice });
+        document.getElementById('status-text').textContent = 'Waiting for opponent...';
+    });
+});
+
+socket.on('opponent_ready', () => {
+    const statusText = document.getElementById('status-text');
+    if (statusText.textContent === '') {
+        statusText.textContent = 'Opponent has chosen. Your turn!';
+    }
+});
+
+socket.on('round_result', (data) => {
+    document.getElementById('your-choice-text').textContent = data.your_choice;
+    document.getElementById('opponent-choice-text').textContent = data.opponent_choice;
+    document.getElementById('opponent-name-2').textContent = data.opponent_username;
+
+    const heading = document.getElementById('result-heading');
+    if (data.result === 'win') {
+        heading.textContent = 'You Win!';
+        heading.className = 'text-success';
+    } else if (data.result === 'loss') {
+        heading.textContent = 'You Lose';
+        heading.className = 'text-danger';
+    } else {
+        heading.textContent = 'Draw';
+        heading.className = 'text-warning';
+    }
+
+    showState(resultState);
+});
+
+document.getElementById('play-again-btn').addEventListener('click', () => {
+    showState(matchState);
+    document.getElementById('status-text').textContent = '';
+});
+
+document.getElementById('leave-btn').addEventListener('click', () => {
+    currentRoom = null;
+    showState(idleState);
+});
+
+socket.on('opponent_left', () => {
+    alert('Your opponent disconnected.');
+    currentRoom = null;
+    showState(idleState);
+});
+</script>
 {% endblock %}
